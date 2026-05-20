@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calendário 2026</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #f5f5f5; display: flex; flex-direction: column; align-items: center; padding: 24px 8px; }
+    .wrap { width: 100%; max-width: 660px; }
+    .cal-head { background: #FFD700; border: 2px solid #333; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 6px 10px; }
+    .cal-head-left { font-size: 12px; font-weight: bold; color: #333; }
+    .cal-head-center { font-size: 15px; font-weight: bold; color: #333; text-align: center; }
+    .cal-head-right { display: flex; justify-content: flex-end; gap: 4px; }
+    .nav-btn { background: #333; color: #FFD700; border: none; padding: 3px 11px; font-size: 15px; font-weight: bold; cursor: pointer; border-radius: 2px; transition: background 0.15s; }
+    .nav-btn:hover { background: #555; }
+    .nav-btn:disabled { background: #bbb; color: #fff; cursor: default; }
+    .month-bar { background: #FFFACD; border: 2px solid #333; border-top: none; text-align: center; padding: 5px; font-size: 15px; font-weight: bold; color: #333; }
+    .grid-wrap { border: 2px solid #333; border-top: none; background: #fff; }
+    .day-heads { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 2px solid #333; }
+    .dh { text-align: center; padding: 6px 2px; font-weight: bold; font-size: 14px; background: #e0e0e0; color: #333; border-right: 1px solid #999; }
+    .dh:last-child { border-right: none; }
+    .days { display: grid; grid-template-columns: repeat(7, 1fr); }
+    .dc { min-height: 36px; border-bottom: 1px solid #aaa; border-right: 1px solid #aaa; background: #fff; display: flex; align-items: center; justify-content: center; }
+    .dc:nth-child(7n) { border-right: none; }
+    .dc.gray { background: #f0f0f0; }
+    .dc.today { background: #FFF59D; }
+    .cell-inner { display: flex; align-items: baseline; justify-content: center; gap: 3px; }
+    .dn { font-size: 18px; font-weight: bold; color: #333; line-height: 1; }
+    .dn.light { color: #bbb; }
+    .rz { font-size: 14px; font-weight: bold; color: #cc0000; line-height: 1; position: relative; top: 2px; }
+    .obs { margin-top: 10px; font-size: 12px; color: #000; text-align: center; font-weight: bold; min-height: 18px; }
+    .btn-download { margin-top: 16px; background: #333; color: #FFD700; border: none; padding: 10px 24px; font-size: 14px; font-weight: bold; cursor: pointer; border-radius: 4px; letter-spacing: 0.5px; }
+    .btn-download:hover { background: #555; }
+    .btn-download:disabled { background: #999; cursor: default; }
+    @media (max-width: 480px) {
+      .dn { font-size: 15px; }
+      .rz { font-size: 12px; }
+      .dh { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrap" id="calendario">
+  <div class="cal-head">
+    <div class="cal-head-left">calendário mensal</div>
+    <div class="cal-head-center" id="yearLabel">ANO 2026</div>
+    <div class="cal-head-right">
+      <button class="nav-btn" id="btnPrev" onclick="changeMonth(-1)">&#8592;</button>
+      <button class="nav-btn" id="btnNext" onclick="changeMonth(1)">&#8594;</button>
+    </div>
+  </div>
+  <div class="month-bar" id="monthLabel"></div>
+  <div class="grid-wrap">
+    <div class="day-heads">
+      <div class="dh">Dom</div><div class="dh">Seg</div><div class="dh">Ter</div>
+      <div class="dh">Qua</div><div class="dh">Qui</div><div class="dh">Sex</div><div class="dh">Sab</div>
+    </div>
+    <div class="days" id="daysGrid"></div>
+  </div>
+  <div class="obs" id="obsText"></div>
+</div>
+
+<button class="btn-download" id="btnDownload" onclick="baixarImagem()">&#8681; Baixar como imagem</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+  const monthNames = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+
+  const FIRST_MONTH = 4; // maio
+  const LAST_MONTH  = 11; // dezembro
+  const YEAR = 2026;
+
+  const data = {
+    '2026-4': {
+      notes: {7:'RZ01',8:'RZ02',9:'RZ03',11:'RZ04',12:'RZ05',13:'RZ06',14:'RZ07',15:'RZ08',16:'RZ09',18:'RZ10',19:'RZ11',20:'RZ12',21:'RZ13',22:'RZ14',25:'RZ15',26:'RZ16',27:'RZ17',29:'RZ18'},
+      obs: '* RZ01 de junho começa no dia 08/06'
+    },
+    '2026-5': {
+      notes: {8:'RZ01',9:'RZ02',10:'RZ03',11:'RZ04',12:'RZ05',13:'RZ06',15:'RZ07',16:'RZ08',17:'RZ09',18:'RZ10',19:'RZ11',22:'RZ12',23:'RZ13',24:'RZ14',25:'RZ15',26:'RZ16',29:'RZ17',30:'RZ18'},
+      obs: '* RZ01 de julho começa no dia 08/07'
+    },
+    '2026-6': {
+      notes: {8:'RZ01',9:'RZ02',10:'RZ03',13:'RZ04',14:'RZ05',15:'RZ06',16:'RZ07',17:'RZ08',20:'RZ09',21:'RZ10',22:'RZ11',23:'RZ12',24:'RZ13',27:'RZ14',28:'RZ15',29:'RZ16',30:'RZ17',31:'RZ18'},
+      obs: '* RZ01 de agosto começa no dia 07/08'
+    },
+    '2026-7': {
+      notes: {7:'RZ01',10:'RZ02',11:'RZ03',12:'RZ04',13:'RZ05',14:'RZ06',17:'RZ07',18:'RZ08',19:'RZ09',20:'RZ10',21:'RZ11',24:'RZ12',25:'RZ13',26:'RZ14',27:'RZ15',28:'RZ16',29:'RZ17',31:'RZ18'},
+      obs: '* RZ01 de setembro começa no dia 08/09'
+    },
+    '2026-8': {
+      notes: {8:'RZ01',9:'RZ02',10:'RZ03',11:'RZ04',14:'RZ05',15:'RZ06',16:'RZ07',17:'RZ08',18:'RZ09',21:'RZ10',22:'RZ11',23:'RZ12',24:'RZ13',25:'RZ14',26:'RZ15',28:'RZ16',29:'RZ17',30:'RZ18'},
+      obs: '* RZ01 de outubro começa no dia 07/10'
+    },
+    '2026-9': {
+      notes: {7:'RZ01',8:'RZ02',9:'RZ03',13:'RZ04',14:'RZ05',15:'RZ06',16:'RZ07',19:'RZ08',20:'RZ09',21:'RZ10',22:'RZ11',23:'RZ12',24:'RZ13',26:'RZ14',27:'RZ15',28:'RZ16',29:'RZ17',30:'RZ18'},
+      obs: '* RZ01 de novembro começa no dia 05/11'
+    },
+    '2026-10': {
+      notes: {5:'RZ01',6:'RZ02',9:'RZ03',10:'RZ04',11:'RZ05',12:'RZ06',13:'RZ07',16:'RZ08',17:'RZ09',18:'RZ10',19:'RZ11',23:'RZ12',24:'RZ13',25:'RZ14',26:'RZ15',27:'RZ16',28:'RZ17',30:'RZ18'},
+      obs: '* RZ01 de dezembro começa no dia 07/12'
+    },
+    '2026-11': {
+      notes: {7:'RZ01',9:'RZ02',10:'RZ03',11:'RZ04',12:'RZ05',14:'RZ06',15:'RZ07',16:'RZ08',17:'RZ09',18:'RZ10',19:'RZ11',21:'RZ12',22:'RZ13',23:'RZ14',28:'RZ15',29:'RZ16',30:'RZ17',31:'RZ18'},
+      obs: ''
+    }
+  };
+
+  let currentMonth = FIRST_MONTH;
+  let currentYear  = YEAR;
+
+  const today = new Date();
+  const todayDay   = today.getDate();
+  const todayMonth = today.getMonth();
+  const todayYear  = today.getFullYear();
+
+  function render() {
+    document.getElementById('yearLabel').textContent = 'ANO ' + currentYear;
+    document.getElementById('monthLabel').textContent = monthNames[currentMonth];
+
+    // Travar setas
+    document.getElementById('btnPrev').disabled = (currentMonth === FIRST_MONTH);
+    document.getElementById('btnNext').disabled = (currentMonth === LAST_MONTH);
+
+    const key = currentYear + '-' + currentMonth;
+    const monthData = data[key] || { notes: {}, obs: '' };
+    const notes = monthData.notes;
+
+    document.getElementById('obsText').textContent = monthData.obs || '';
+
+    const grid = document.getElementById('daysGrid');
+    grid.innerHTML = '';
+
+    const firstDay    = new Date(currentYear, currentMonth, 1).getDay();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const prevDays    = new Date(currentYear, currentMonth, 0).getDate();
+
+    let cells = [];
+    for (let i = firstDay - 1; i >= 0; i--) {
+      cells.push({ day: prevDays - i, other: true });
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      cells.push({ day: d, other: false });
+    }
+    while (cells.length % 7 !== 0) {
+      cells.push({ day: cells.length - firstDay - daysInMonth + 1, other: true });
+    }
+
+    cells.forEach(function(c) {
+      const isToday = !c.other
+        && c.day === todayDay
+        && currentMonth === todayMonth
+        && currentYear === todayYear;
+
+      const dc = document.createElement('div');
+      dc.className = 'dc' + (c.other ? ' gray' : '') + (isToday ? ' today' : '');
+
+      const inner = document.createElement('div');
+      inner.className = 'cell-inner';
+
+      const dn = document.createElement('div');
+      dn.className = 'dn' + (c.other ? ' light' : '');
+      dn.textContent = c.day;
+      inner.appendChild(dn);
+
+      if (!c.other && notes[c.day]) {
+        const rz = document.createElement('div');
+        rz.className = 'rz';
+        rz.textContent = notes[c.day];
+        inner.appendChild(rz);
+      }
+
+      dc.appendChild(inner);
+      grid.appendChild(dc);
+    });
+  }
+
+  function changeMonth(dir) {
+    const next = currentMonth + dir;
+    if (next < FIRST_MONTH || next > LAST_MONTH) return;
+    currentMonth = next;
+    render();
+  }
+
+  function baixarImagem() {
+    const btn = document.getElementById('btnDownload');
+    btn.disabled = true;
+    btn.textContent = 'Gerando imagem...';
+    const el = document.getElementById('calendario');
+    html2canvas(el, { backgroundColor: '#f5f5f5', scale: 2 }).then(function(canvas) {
+      const link = document.createElement('a');
+      link.download = 'calendario-' + monthNames[currentMonth] + '-' + currentYear + '.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      btn.disabled = false;
+      btn.innerHTML = '&#8681; Baixar como imagem';
+    });
+  }
+
+  render();
+</script>
+</body>
+</html>
