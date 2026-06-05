@@ -103,13 +103,16 @@
     }
   };
 
-  let currentMonth = FIRST_MONTH;
-  let currentYear  = YEAR;
-
   const today = new Date();
   const todayDay   = today.getDate();
   const todayMonth = today.getMonth();
   const todayYear  = today.getFullYear();
+
+  let currentYear = YEAR;
+  // Abre no mês corrente, limitado ao intervalo do calendário (junho–dezembro).
+  let currentMonth = (todayYear === YEAR)
+    ? Math.min(Math.max(todayMonth, FIRST_MONTH), LAST_MONTH)
+    : (todayYear < YEAR ? FIRST_MONTH : LAST_MONTH);
 
   function render() {
     document.getElementById('yearLabel').textContent = 'ANO ' + currentYear;
